@@ -88,7 +88,10 @@ function search($file, $media_wikimedia_iframe_src) {
 			if((isset($_GET['next']) && intval($_GET['next']) -1<1) || !isset($_GET['next']))
 			{
 				echo '</td><td align="right">';
-				echo '<a href="' . $media_wikimedia_iframe_src . '&amp;TB_iframe=true&amp;height=500&amp;width=640&amp;next=' . (intval($_GET['next']) +1) . '&amp;recherche=' . $file . '&amp;search=search" align="right" >Suivant</a>';
+				if(isset($_GET['next']))
+					echo '<a href="' . $media_wikimedia_iframe_src . '&amp;TB_iframe=true&amp;height=500&amp;width=640&amp;next=' . (intval($_GET['next']) +1) . '&amp;recherche=' . $file . '&amp;search=search" align="right" >Suivant</a>';
+				else
+					echo '<a href="' . $media_wikimedia_iframe_src . '&amp;TB_iframe=true&amp;height=500&amp;width=640&amp;next=' . 1 . '&amp;recherche=' . $file . '&amp;search=search" align="right" >Suivant</a>';
 				echo '</td></tr></table>'; 
 			}
 		}

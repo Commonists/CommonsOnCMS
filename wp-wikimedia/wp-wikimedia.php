@@ -4,9 +4,17 @@ Plugin Name: Wordpress Wikimedia
 Plugin URI: https://www.mediawiki.org/wiki/User:Jean-Frédéric/CommonsOnCMS
 Description: Wikimedia.
 Author: Jerome Deboffles Mickael Lemaitre
-Version: 0.1.0 (beta)
+Version: 0.1.1 (beta)
 Author URI: https://www.mediawiki.org/wiki/User:Jean-Frédéric/CommonsOnCMS
 */
+// Afficher les erreurs à l'écran
+ini_set('display_errors', 1);
+// Enregistrer les erreurs dans un fichier de log
+ini_set('log_errors', 1);
+// Nom du fichier qui enregistre les logs (attention aux droits à l'écriture)
+ini_set('error_log', dirname(__FILE__) . '/log_error_php.txt');
+// Afficher les erreurs et les avertissements
+error_reporting(E_ALL);
 include 'wp-querry.php';
 include 'wp-search.php';
 include 'wp-opensearch.php';
@@ -33,7 +41,7 @@ if (!class_exists("wp_wikimedia")) {
 			$uploading_iframe_ID = (int) (0 == $post_ID ? $temp_ID : $post_ID);
 			$media_upload_iframe_src = "media-upload.php?post_id=$uploading_iframe_ID";
 
-			$media_wikimedia_iframe_src = apply_filters('media_wikimedia_iframe_src', "$media_upload_iframe_src&amp;type=wikimedia&amp;tab=wikimedia");
+			$media_wikimedia_iframe_src = apply_filters('media_wikimedia_iframe_src', $media_upload_iframe_src . "&amp;type=wikimedia&amp;tab=wikimedia");
 			$wikimedia_title = __('Add Wikimedia picture', 'wp-wikimedia');
 
 			echo "<a href=\"{$media_wikimedia_iframe_src}&amp;TB_iframe=true&amp;height=500&amp;width=640\" class=\"thickbox\" title=\"$wikimedia_title\">Wikimedia Commons</a>";
@@ -117,15 +125,16 @@ if (class_exists("wp_wikimedia"))
 
 	
 	function media_upload_type_wikimedia() {
-	
-		add_filter('media_upload_tabs', array($this, 'modifyMediaTab'));
+		$wikimedia = new wp_wikimedia();
+		
+		add_filter('media_upload_tabs', array($wikimedia, 'modifyMediaTab'));
 		media_upload_header();
 	
 		// DEFINITION VAR GLOB. IFRAME AND USER AGENT
 		global $post_ID, $temp_ID;
 		$uploading_iframe_ID = (int) (0 == $post_ID ? $temp_ID : $post_ID);
 		$media_upload_iframe_src = "media-upload.php?post_id=$uploading_iframe_ID";
-		$media_wikimedia_iframe_src = apply_filters('media_wikimedia_iframe_src', "$media_upload_iframe_src&amp;type=wikimedia&amp;tab=wikimedia");
+		$media_wikimedia_iframe_src = apply_filters('media_wikimedia_iframe_src', $media_upload_iframe_src . "&amp;type=wikimedia&amp;tab=wikimedia");
 		
 		// ini_set ('user_agent', '”Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.0)”');
 		ini_set ('user_agent', '”CommonOnCMS”');
@@ -136,10 +145,11 @@ if (class_exists("wp_wikimedia"))
 
 		if(!isset($_GET['recherche']) && !isset($_POST['recherche']) && !isset($_GET['fichier']))
 		{
+			$engine = "search";
 		?>
 			<div id="search-acc">
 				<form method="post" action="">
-				<input type="text" name="recherche" align="rigth" value="<?php echo $recherche?>"/><input type="submit" value="Recherche" class="button" align="rigth"/>
+				<input type="text" name="recherche" align="rigth" value=""/><input type="submit" value="Recherche" class="button" align="rigth"/>
 				<br />
 				<select name="search" id="search">
 				   <option value="search" <?php if($engine == "search") echo 'selected';?>>Search</option>
@@ -213,7 +223,9 @@ if (class_exists("wp_wikimedia"))
 			
 			//RECHERCHE LICENCE PAR XPATH
 			$doc = new DOMDocument();
+			libxml_use_internal_errors(true);
 			$doc->loadHTMLFile($_GET['licence']);
+			libxml_clear_errors();
 		
 			$xpath = new DOMXpath($doc);
 		
@@ -328,7 +340,7 @@ if (class_exists("wp_wikimedia"))
 			//LIEN RETOUR
 			echo '<a href="javascript:window.history.go(-1)">Retour</a>';
 			//AFFICHAGE DE L'IMAGE
-			if($othresol[0]) // SI il esiste d'autre resolution...
+			if(isset($othresol[0])) // SI il esiste d'autre resolution...
 				echo '<p><img src="' . $othresol[0] . '" align="center"></p>';
 			else // Sinon on affiche resolution full
 				echo '<p><img src="' . $fullresol . '"></p>';
@@ -603,4 +615,3 @@ if (class_exists("wp_wikimedia"))
 	}
 
 ?>
-
